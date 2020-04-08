@@ -1,0 +1,42 @@
+import requests
+from bs4 import BeautifulSoup
+
+URL = 'https://www.udemy.com/courses/search/?q=learn%20flutter%20dart%20to%20build%20ios%20android%20apps&src=sac&kw=learn%20dart%20a'
+
+
+def get_html(url, parameters = None):
+	result = requests.get(url, parameters)
+	return result
+
+def get_pages_count(html):
+	soup = BeautifulSoup(html, 'html.parser')
+	pagination = soup.find_all('li', class_ = 'class')
+	#page count class has no name
+	if pagination:
+		return int(pagination[-1].get_text())
+	else:
+		return 1
+
+def get_content(html):
+	soup = BeautifulSoup(html, 'html.parser')
+	items = soup.find_all('div', class_ = 'course-card-list')
+	videos = []
+	for item in items:
+		free_one = item.find('span', class_ = 'sr-only').get_text()
+		if free_one < 0:
+			videos.append((
+				item.find('div', class_ = 'list-view-course-card').get_text()
+			))
+	return videos
+
+
+def parse():
+	html = get_html(URL)
+	vids = []
+	number_of_pages = get_pages_count(html.text)
+	for page in range(1, number_of_pages + 1):
+		html = get_html(URL, parameters = (page))
+		vids.extend(get_content(html.text))
+	print(vids )
+
+parse()
